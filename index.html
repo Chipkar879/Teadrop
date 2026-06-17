@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teadrop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <h1>Teadrop</h1>
+            <p>Enter the access code to unlock today's drop.</p>
+            <div class="input-group">
+                <input type="text" id="code-input" placeholder="DD/MM/YYYY" maxlength="10">
+                <button id="submit-btn">Unlock</button>
+            </div>
+            <p id="error-msg" class="error-hidden">Incorrect code. Try again.</p>
+        </div>
+    </div>
+
+    <div id="main-screen" class="screen hidden">
+        
+        <div class="animation-container">
+            <div class="tea-cup">
+                <div class="tea-liquid"></div>
+            </div>
+            <div class="tea-spill" id="tea-stream"></div>
+        </div>
+
+        <div id="feed-container" class="feed-hidden">
+            <header>
+                <h2>Today's Drop</h2>
+                <p id="current-date-display"></p>
+            </header>
+            
+            <main class="news-box">
+                <p id="news-content">Brewing today's news...</p>
+            </main>
+
+            <section class="comment-section">
+                <h3>Discussion</h3>
+                <form id="comment-form">
+                    <textarea id="comment-input" placeholder="Share your thoughts..." required></textarea>
+                    <button type="submit">Post Reply</button>
+                </form>
+                <div id="comments-list">
+                    </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

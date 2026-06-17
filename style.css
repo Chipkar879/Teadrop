@@ -1,0 +1,272 @@
+/* Base Reset & Typography */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #fcfbfa;
+    color: #2c2520;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Utilities */
+.hidden { display: none !important; }
+
+/* Screens Layout */
+.screen {
+    width: 100%;
+    max-width: 600px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Auth Screen Styling */
+.auth-container {
+    text-align: center;
+    width: 100%;
+}
+
+.auth-container h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: #4a3b32;
+}
+
+.auth-container p {
+    color: #8a807a;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+#code-input {
+    padding: 12px 16px;
+    border: 1px solid #e0dcd8;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    background-color: #fff;
+    transition: border 0.3s;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+#code-input:focus {
+    border-color: #8c6d58;
+}
+
+#submit-btn {
+    padding: 12px 24px;
+    background-color: #4a3b32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#submit-btn:hover {
+    background-color: #635044;
+}
+
+.error-hidden { opacity: 0; transition: opacity 0.3s; color: #b13434; font-size: 0.85rem; margin-top: 15px; }
+.error-visible { opacity: 1; color: #b13434; font-size: 0.85rem; margin-top: 15px; }
+
+/* Cup & Liquid Graphics */
+.animation-container {
+    position: relative;
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.tea-cup {
+    width: 80px;
+    height: 60px;
+    border: 4px solid #4a3b32;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
+    transition: transform 1s ease-in-out;
+}
+
+/* Handle of the cup */
+.tea-cup::after {
+    content: '';
+    position: absolute;
+    right: -14px;
+    top: 12px;
+    width: 16px;
+    height: 24px;
+    border: 4px solid #4a3b32;
+    border-left: none;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.tea-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80%;
+    background-color: #c48257;
+    transition: height 0.8s ease-out;
+}
+
+/* Spill stream styling */
+.tea-spill {
+    position: absolute;
+    top: 56px;
+    width: 6px;
+    background-color: #c48257;
+    height: 0;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    transition: height 0.6s ease-in-out;
+}
+
+/* Animation triggers via JS classes */
+.cup-tip-pour {
+    transform: rotate(100deg) translate(10px, -15px);
+}
+
+.cup-tip-pour .tea-liquid {
+    height: 0%;
+}
+
+.spill-active {
+    height: 100px;
+}
+
+/* Content Feed & Interactive Area */
+#feed-container {
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+#feed-container.feed-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+header h2 {
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: #4a3b32;
+}
+
+#current-date-display {
+    font-size: 0.9rem;
+    color: #8a807a;
+    margin-top: 4px;
+}
+
+.news-box {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e0dcd8;
+    line-height: 1.6;
+    color: #3d3530;
+    margin-bottom: 35px;
+    box-shadow: 0 4px 12px rgba(74, 59, 50, 0.02);
+}
+
+/* Form and Interaction Layout */
+.comment-section h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: #4a3b32;
+}
+
+#comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+#comment-input {
+    width: 100%;
+    height: 80px;
+    padding: 12px;
+    border: 1px solid #e0dcd8;
+    border-radius: 8px;
+    resize: none;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.3s;
+}
+
+#comment-input:focus {
+    border-color: #8c6d58;
+}
+
+#comment-form button {
+    align-self: flex-end;
+    padding: 10px 20px;
+    background-color: #8c6d58;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+}
+
+#comment-form button:hover {
+    background-color: #4a3b32;
+}
+
+/* User Feed Comments */
+#comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comment-item {
+    background: #f4f1ee;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #4a423d;
+    animation: fadeInComment 0.4s ease-out forwards;
+}
+
+@keyframes fadeInComment {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
