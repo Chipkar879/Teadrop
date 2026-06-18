@@ -86,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1600);
     }
 
+    // Helper: Formats current system date into standard DD/MM/YYYY
     function getFormattedDate() {
         const date = new Date();
         const day = String(date.getDate()).padStart(2, '0');
@@ -94,8 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return `${day}/${month}/${year}`;
     }
 
+    // Parsers & Processors for local news text asset
     function fetchNewsContent(targetDate) {
-        fetch("news.txt")
+        // FIXED: The "?v=" trick bypasses the browser cache to get your newest text edits instantly
+        fetch("news.txt?v=" + new Date().getTime())
             .then(response => {
                 if (!response.ok) throw new Error("Network issue.");
                 return response.text();
@@ -114,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    // Process file into key-value map mapping [Date -> Content Body]
     function parseNewsFile(text) {
         const lines = text.split(/\r?\n/);
         const newsData = {};
@@ -155,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (error) throw error;
 
             if (data) {
-                commentsList.innerHTML = ""; // Clear loader text
+                commentsList.innerHTML = ""; 
                 data.forEach(comment => {
                     renderComment(comment.text);
                 });
