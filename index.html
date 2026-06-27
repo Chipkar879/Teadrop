@@ -4,19 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teadrop</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="auth-screen" class="screen">
+    <div id="name-screen" class="screen hidden">
+        <div class="auth-container">
+            <h1>Welcome to Teadrop</h1>
+            <p>What should we call you in the discussion feed?</p>
+            <div class="input-group">
+                <input type="text" id="name-input" placeholder="Enter your nickname" maxlength="20">
+                <button id="name-submit-btn">Next</button>
+            </div>
+            <p id="name-error-msg" class="error-hidden">Please enter a valid name.</p>
+        </div>
+    </div>
+
+    <div id="auth-screen" class="screen hidden">
         <div class="auth-container">
             <h1>Teadrop</h1>
-            <p>Enter the access code to unlock today's drop.</p>
+            <p>Hey <span id="user-greeting" style="font-weight: 600; color: #4a3b32;"></span>! Enter the access code to unlock today's drop.</p>
             <div class="input-group">
                 <input type="text" id="code-input" placeholder="DD/MM/YYYY" maxlength="10">
                 <button id="submit-btn">Unlock</button>
             </div>
             <p id="error-msg" class="error-hidden">Incorrect code. Try again.</p>
+            <button id="change-name-btn" class="text-link-btn">Change Name</button>
         </div>
     </div>
 
@@ -53,7 +67,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>

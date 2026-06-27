@@ -270,3 +270,48 @@ header h2 {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ... Keep all your previous styling exactly the same, just add these rules to the bottom ... */
+
+/* Text link button for changing name */
+.text-link-btn {
+    background: none;
+    border: none;
+    color: #8c6d58;
+    text-decoration: underline;
+    font-size: 0.85rem;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.text-link-btn:hover {
+    color: #4a3b32;
+}
+
+/* User branded comment blocks */
+.comment-item {
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: #2c2520;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeInComment 0.4s ease-out forwards;
+}
+
+/* Bold name style inside the comment block */
+.comment-user-header {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.comment-text-body {
+    line-height: 1.4;
+}
