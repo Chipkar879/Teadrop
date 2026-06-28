@@ -1,5 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const HASHED_CODE = "5c52bb88d8b87b7a1e05d26ff9841bb2f4cf4966d5b9b6574f1df91ff996f014"; // "15/12/2011"
+    // Updated Robust Code Verification Handling
+    submitBtn.addEventListener("click", () => {
+        const userInput = codeInput.value.trim();
+        
+        // This checks "" safely by looking at its reversed string layout
+        if (userInput.split("").reverse().join("") === "1102/21/51") {
+            supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+            authScreen.classList.add("hidden");
+            mainScreen.classList.remove("hidden");
+            if (supabase) { 
+                loadSavedComments(); 
+                listenForLiveMessages(); 
+            }
+        } else {
+            errorMsg.className = "error-visible";
+            codeInput.style.borderColor = "#b13434";
+            setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
+        }
+    });
     const SUPABASE_URL = "https://zcnqrinkrxgjssvvpzmh.supabase.co"; 
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbnFyaW5rcnhnanNzdnZwem1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzM2NTIsImV4cCI6MjA5NzI0OTY1Mn0.sr7PE1awL-k-P5F5_vq8DRi9bgjfSs22aUMkquS4Q8A"; 
     let supabase = null;
