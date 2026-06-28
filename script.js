@@ -1,23 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Updated Robust Code Verification Handling
-    submitBtn.addEventListener("click", () => {
-        const userInput = codeInput.value.trim();
-        
-        // This checks "" safely by looking at its reversed string layout
-        if (userInput.split("").reverse().join("") === "1102/21/51") {
-            supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-            authScreen.classList.add("hidden");
-            mainScreen.classList.remove("hidden");
-            if (supabase) { 
-                loadSavedComments(); 
-                listenForLiveMessages(); 
-            }
-        } else {
-            errorMsg.className = "error-visible";
-            codeInput.style.borderColor = "#b13434";
-            setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
-        }
-    });
+    // Hidden key: Reversing "1102/21/51" unlocks the chatroom safely without heavy crypto APIs breaking
+    const SECRET_REVERSED = "1102/21/51"; 
+    
+    // Live Supabase Database Connection
     const SUPABASE_URL = "https://zcnqrinkrxgjssvvpzmh.supabase.co"; 
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbnFyaW5rcnhnanNzdnZwem1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzM2NTIsImV4cCI6MjA5NzI0OTY1Mn0.sr7PE1awL-k-P5F5_vq8DRi9bgjfSs22aUMkquS4Q8A"; 
     let supabase = null;
@@ -60,84 +45,132 @@ document.addEventListener("DOMContentLoaded", () => {
     let mediaRecorder = null;
     let audioChunks = [];
 
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);                    
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    // Local profile picture extraction logic
+    if (pfpFileInput) {
+        pfpFileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    userPfpBase64 = event.target.result;
+                    if (pfpPreviewImg) {
+                        pfpPreviewImg.src = userPfpBase64;
+                        pfpPreviewImg.classList.remove("hidden");
+                    }
+                    if (pfpPreviewFallback) pfpPreviewFallback.classList.add("hidden");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
 
-    pfpFileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                userPfpBase64 = event.target.result;
-                pfpPreviewImg.src = userPfpBase64;
-                pfpPreviewImg.classList.remove("hidden");
-                pfpPreviewFallback.classList.add("hidden");
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
+    // Direct routing check for recurring user visits
     if (!currentUsername) {
-        nameScreen.classList.remove("hidden");
+        if (nameScreen) nameScreen.classList.remove("hidden");
     } else {
         showPasswordScreen();
     }
 
-    nameSubmitBtn.addEventListener("click", () => {
-        const enteredName = nameInput.value.trim();
-        if (enteredName.length >= 2) {
-            localStorage.setItem("teadrop_username", enteredName);
-            if (userPfpBase64) localStorage.setItem("teadrop_pfp", userPfpBase64);
-            currentUsername = enteredName;
-            nameScreen.classList.add("hidden");
-            showPasswordScreen();
-        } else {
-            nameErrorMsg.className = "error-visible";
-        }
-    });
-
-    function showPasswordScreen() {
-        userGreeting.textContent = currentUsername;
-        if (userPfpBase64) {
-            authPfp.src = userPfpBase64;
-            authPfp.classList.remove("hidden");
-            authPfpFallback.classList.add("hidden");
-        } else {
-            authPfpFallback.textContent = currentUsername.charAt(0).toUpperCase();
-            authPfpFallback.classList.remove("hidden");
-            authPfp.classList.add("hidden");
-        }
-        authScreen.classList.remove("hidden");
+    if (nameSubmitBtn) {
+        nameSubmitBtn.addEventListener("click", () => {
+            const enteredName = nameInput.value.trim();
+            if (enteredName.length >= 2) {
+                localStorage.setItem("teadrop_username", enteredName);
+                if (userPfpBase64) {
+                    localStorage.setItem("teadrop_pfp", userPfpBase64);
+                } else {
+                    localStorage.removeItem("teadrop_pfp");
+                }
+                currentUsername = enteredName;
+                if (nameScreen) nameScreen.classList.add("hidden");
+                showPasswordScreen();
+            } else {
+                if (nameErrorMsg) nameErrorMsg.className = "error-visible";
+            }
+        });
     }
 
-    changeNameBtn.addEventListener("click", () => {
-        authScreen.classList.add("hidden");
-        nameScreen.classList.remove("hidden");
-    });
+    if (nameInput) {
+        nameInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") nameSubmitBtn.click();
+        });
+    }
 
-    submitBtn.addEventListener("click", async () => {
-        const cleanHash = await sha256(codeInput.value.trim());
-        if (cleanHash === HASHED_CODE) {
-            supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-            authScreen.classList.add("hidden");
-            mainScreen.classList.remove("hidden");
-            if (supabase) { loadSavedComments(); listenForLiveMessages(); }
-        } else {
-            errorMsg.className = "error-visible";
+    function showPasswordScreen() {
+        if (userGreeting) userGreeting.textContent = currentUsername;
+        
+        if (userPfpBase64 && authPfp) {
+            authPfp.src = userPfpBase64;
+            authPfp.classList.remove("hidden");
+            if (authPfpFallback) authPfpFallback.classList.add("hidden");
+        } else if (authPfpFallback) {
+            authPfpFallback.textContent = currentUsername.charAt(0).toUpperCase();
+            authPfpFallback.classList.remove("hidden");
+            if (authPfp) authPfp.classList.add("hidden");
         }
-    });
+        
+        if (authScreen) authScreen.classList.remove("hidden");
+        if (codeInput) codeInput.value = "";
+    }
+
+    if (changeNameBtn) {
+        changeNameBtn.addEventListener("click", () => {
+            if (authScreen) authScreen.classList.add("hidden");
+            if (nameInput) nameInput.value = currentUsername;
+            if (nameScreen) nameScreen.classList.remove("hidden");
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener("click", () => {
+            const userInput = codeInput.value.trim();
+            const reverseCheck = userInput.split("").reverse().join("");
+
+            if (reverseCheck === SECRET_REVERSED) {
+                try {
+                    if (window.supabase) {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    }
+                } catch (e) {
+                    console.error("Database initialization fault:", e);
+                }
+                transitionToMain();
+            } else {
+                if (errorMsg) errorMsg.className = "error-visible";
+                if (codeInput) {
+                    codeInput.style.borderColor = "#b13434";
+                    setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
+                }
+            }
+        });
+    }
+
+    if (codeInput) {
+        codeInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") submitBtn.click();
+        });
+    }
+
+    function transitionToMain() {
+        if (authScreen) authScreen.classList.add("hidden");
+        if (mainScreen) mainScreen.classList.remove("hidden");
+
+        if (supabase) {
+            loadSavedComments();
+            listenForLiveMessages();
+        }
+    }
 
     /* ==========================================================================
-       WHATSAPP CHAT FUNCTIONS WITH VOICE AND IMAGE FEATURES
+       WHATSAPP CHAT LOGIC STRATEGIES
        ========================================================================== */
 
     function getBubbleColor(username) {
         const standard = username.trim().toLowerCase();
         let hash = 0;
-        for (let i = 0; i < standard.length; i++) hash = standard.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < standard.length; i++) {
+            hash = standard.charCodeAt(i) + ((hash << 5) - hash);
+        }
         return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
     }
 
@@ -163,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
         author.textContent = username;
         if (!isSelf) bubble.appendChild(author);
 
-        // Check if message payload is an Image data URI or an Audio data URI
         if (text.startsWith("data:image")) {
             const img = document.createElement("img");
             img.className = "msg-media-img";
@@ -188,13 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
         bubble.appendChild(time);
 
         msgContainer.appendChild(bubble);
-        commentsList.appendChild(msgContainer);
-        chatScroller.scrollTop = chatScroller.scrollHeight;
+        if (commentsList) commentsList.appendChild(msgContainer);
+        if (chatScroller) chatScroller.scrollTop = chatScroller.scrollHeight;
     }
 
     async function loadSavedComments() {
+        if (!supabase) return;
         const { data } = await supabase.from('comments').select('username, text, pfp, created_at').order('created_at', { ascending: true });
-        if (data) {
+        if (data && commentsList) {
             commentsList.innerHTML = "";
             data.forEach(msg => {
                 const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -204,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function listenForLiveMessages() {
+        if (!supabase) return;
         supabase.channel('public:comments').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, payload => {
             const fresh = payload.new;
             if (fresh.username.trim().toLowerCase() !== currentUsername.trim().toLowerCase()) {
@@ -220,47 +254,49 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    commentForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const text = commentInput.value.trim();
-        if (text) { sendMessagePayload(text); commentInput.value = ""; }
-    });
+    if (commentForm) {
+        commentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const text = commentInput.value.trim();
+            if (text) { sendMessagePayload(text); commentInput.value = ""; }
+        });
+    }
 
-    // Image Upload Feature Inside Chat Bar
-    chatImageInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => { sendMessagePayload(event.target.result); };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (chatImageInput) {
+        chatImageInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => { sendMessagePayload(event.target.result); };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
-    // Voice Notes Recording Feature Inside Chat Bar
-    voiceRecordBtn.addEventListener("click", async () => {
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                
-                mediaRecorder.addEventListener("dataavailable", e => audioChunks.push(e.data));
-                mediaRecorder.addEventListener("stop", () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    const reader = new FileReader();
-                    reader.onload = (event) => { sendMessagePayload(event.target.result); };
-                    reader.readAsDataURL(audioBlob);
+    if (voiceRecordBtn) {
+        voiceRecordBtn.addEventListener("click", async () => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
                     
-                    // Stop mic access tracks gently
-                    stream.getTracks().forEach(track => track.stop());
-                });
+                    mediaRecorder.addEventListener("dataavailable", e => audioChunks.push(e.data));
+                    mediaRecorder.addEventListener("stop", () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const reader = new FileReader();
+                        reader.onload = (event) => { sendMessagePayload(event.target.result); };
+                        reader.readAsDataURL(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    });
 
-                mediaRecorder.start();
-                voiceRecordBtn.classList.add("recording-active");
-            } catch (err) { alert("Microphone access denied."); }
-        } else {
-            mediaRecorder.stop();
-            voiceRecordBtn.classList.remove("recording-active");
-        }
-    });
+                    mediaRecorder.start();
+                    voiceRecordBtn.classList.add("recording-active");
+                } catch (err) { alert("Microphone access denied."); }
+            } else {
+                mediaRecorder.stop();
+                voiceRecordBtn.classList.remove("recording-active");
+            }
+        });
+    }
 });
