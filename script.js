@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Hidden key: Reversing "1102/21/51" unlocks the chatroom safely without heavy crypto APIs breaking
-    const SECRET_REVERSED = "1102/21/51"; 
+    // Normal, unencrypted password string
+    const CORRECT_CODE = "15/12/2011"; 
     
     // Live Supabase Database Connection
     const SUPABASE_URL = "https://zcnqrinkrxgjssvvpzmh.supabase.co"; 
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let mediaRecorder = null;
     let audioChunks = [];
 
-    // Local profile picture extraction logic
+    // Local profile picture upload selection handling
     if (pfpFileInput) {
         pfpFileInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Direct routing check for recurring user visits
+    // Check if user has visited before to bypass name creation screen
     if (!currentUsername) {
         if (nameScreen) nameScreen.classList.remove("hidden");
     } else {
@@ -124,15 +124,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (submitBtn) {
         submitBtn.addEventListener("click", () => {
             const userInput = codeInput.value.trim();
-            const reverseCheck = userInput.split("").reverse().join("");
 
-            if (reverseCheck === SECRET_REVERSED) {
+            // Completely normal password check
+            if (userInput === CORRECT_CODE) {
                 try {
                     if (window.supabase) {
                         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                     }
                 } catch (e) {
-                    console.error("Database initialization fault:", e);
+                    console.error("Database connection fault:", e);
                 }
                 transitionToMain();
             } else {
@@ -162,10 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ==========================================================================
-       WHATSAPP CHAT LOGIC STRATEGIES
+       WHATSAPP CHAT APPLICATION ENGINE
        ========================================================================== */
 
     function getBubbleColor(username) {
+        // Lowercase standardization means Vikrant, vikrant, and VIKRANT use the same bubble colors
         const standard = username.trim().toLowerCase();
         let hash = 0;
         for (let i = 0; i < standard.length; i++) {
@@ -196,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         author.textContent = username;
         if (!isSelf) bubble.appendChild(author);
 
+        // Processes regular strings vs media attachments seamlessly
         if (text.startsWith("data:image")) {
             const img = document.createElement("img");
             img.className = "msg-media-img";
