@@ -3,67 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teadrop</title>
+    <title>Teadrop Chat</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
     <div id="name-screen" class="screen hidden">
-        <div class="auth-container">
-            <h1>Welcome to Teadrop</h1>
-            <p>What should we call you in the discussion feed?</p>
-            <div class="input-group">
-                <input type="text" id="name-input" placeholder="Enter your nickname" maxlength="20">
-                <button id="name-submit-btn">Next</button>
+        <div class="auth-container card-ui">
+            <h1>Create Your Profile</h1>
+            <p class="subtitle">Set up your identity for the chat room</p>
+            
+            <div class="pfp-setup-container">
+                <div id="pfp-preview-fallback" class="pfp-preview"><i class="fa-solid fa-user-plus"></i></div>
+                <img id="pfp-preview-img" class="pfp-preview hidden" src="" alt="Preview">
+                <label for="pfp-file-input" class="pfp-upload-btn">
+                    <i class="fa-solid fa-camera"></i>
+                </label>
+                <input type="file" id="pfp-file-input" accept="image/*" class="hidden">
             </div>
-            <p id="name-error-msg" class="error-hidden">Please enter a valid name.</p>
+
+            <div class="input-group-vertical">
+                <input type="text" id="name-input" placeholder="Enter your nickname..." maxlength="20">
+                <button id="name-submit-btn" class="action-btn">Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <p id="name-error-msg" class="error-hidden">Please enter a valid nickname.</p>
         </div>
     </div>
 
     <div id="auth-screen" class="screen hidden">
-        <div class="auth-container">
-            <h1>Teadrop</h1>
-            <p>Hey <span id="user-greeting" style="font-weight: 600; color: #4a3b32;"></span>! Enter the access code to unlock today's drop.</p>
-            <div class="input-group">
-                <input type="text" id="code-input" placeholder="DD/MM/YYYY" maxlength="10">
-                <button id="submit-btn">Unlock</button>
+        <div class="auth-container card-ui">
+            <div id="auth-user-badge" class="user-badge">
+                <img id="auth-pfp" src="" alt="Avatar" class="avatar-sm hidden">
+                <div id="auth-pfp-fallback" class="avatar-sm text-avatar"></div>
+                <h2 id="user-greeting"></h2>
+            </div>
+            <p class="subtitle">Enter the access token to enter the chat room</p>
+            <div class="input-group-vertical">
+                <input type="password" id="code-input" placeholder="🔑 Enter Password" maxlength="15">
+                <button id="submit-btn" class="action-btn login-btn">Unlock Chat <i class="fa-solid fa-door-open"></i></button>
             </div>
             <p id="error-msg" class="error-hidden">Incorrect code. Try again.</p>
-            <button id="change-name-btn" class="text-link-btn">Change Name</button>
+            <button id="change-name-btn" class="text-link-btn"><i class="fa-solid fa-user-pen"></i> Switch Account</button>
         </div>
     </div>
 
     <div id="main-screen" class="screen hidden">
-        
-        <div class="animation-container">
-            <div class="tea-cup">
-                <div class="tea-liquid"></div>
-            </div>
-            <div class="tea-spill" id="tea-stream"></div>
-        </div>
-
-        <div id="feed-container" class="feed-hidden">
-            <header>
-                <h2>Today's Drop</h2>
-                <p id="current-date-display"></p>
-            </header>
+        <div class="chat-app-wrapper">
             
-            <main class="news-box">
-                <p id="news-content">Brewing today's news...</p>
+            <header class="chat-header">
+                <div class="header-left">
+                    <div class="group-pfp-container">
+                        <img id="group-pic-display" src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=100" alt="Group Pic">
+                        <label for="group-pic-input" class="group-pic-edit-overlay">
+                            <i class="fa-solid fa-pen"></i>
+                        </label>
+                        <input type="file" id="group-pic-input" accept="image/*" class="hidden">
+                    </div>
+                    <div class="group-meta">
+                        <div class="title-edit-row">
+                            <h2 id="group-name-title" contenteditable="true">The Tea Room</h2>
+                            <i class="fa-solid fa-pencil edit-indicator"></i>
+                        </div>
+                        <p class="group-status">online, group discussion</p>
+                    </div>
+                </div>
+                <div class="header-right-actions">
+                    <button class="hdr-btn"><i class="fa-solid fa-video"></i></button>
+                    <button class="hdr-btn"><i class="fa-solid fa-phone"></i></button>
+                    <button class="hdr-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button class="hdr-btn" id="logout-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </div>
+            </header>
+
+            <main class="chat-body" id="chat-scroller">
+                <div id="comments-list" class="message-feed">
+                    </div>
             </main>
 
-            <section class="comment-section">
-                <h3>Discussion</h3>
-                <form id="comment-form">
-                    <textarea id="comment-input" placeholder="Share your thoughts..." required></textarea>
-                    <button type="submit">Post Reply</button>
+            <footer class="chat-input-bar">
+                <div class="input-action-triggers">
+                    <button class="bar-btn"><i class="fa-regular fa-face-smile"></i></button>
+                    <button class="bar-btn"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <form id="comment-form" class="msg-input-form">
+                    <input type="text" id="comment-input" placeholder="Type a message" autocomplete="off" required>
+                    <button type="submit" id="msg-send-btn" class="send-circle-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
                 </form>
-                <div id="comments-list">
-                    </div>
-            </section>
-        </div>
+                <div class="input-action-triggers">
+                    <button class="bar-btn"><i class="fa-solid fa-microphone"></i></button>
+                </div>
+            </footer>
 
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

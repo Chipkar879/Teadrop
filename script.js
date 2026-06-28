@@ -1,63 +1,106 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const CORRECT_CODE = "15/12/2011";
+    // The SHA-256 hash of "CORRECT_CODE" is precomputed and stored for secure comparison without exposing the actual code in the client-side script.
+    const HASHED_CODE = "5c52bb88d8b87b7a1e05d26ff9841bb2f4cf4966d5b9b6574f1df91ff996f014";
+
+    // Helper function to generate a SHA-256 hash using the browser's built-in Crypto API
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);                    
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Updated Code Verification Handling
+    submitBtn.addEventListener("click", async () => {
+        const inputClean = codeInput.value.trim();
+        const inputHash = await sha256(inputClean);
+
+        if (inputHash === HASHED_CODE) {
+            try {
+                if (window.supabase) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                }
+            } catch (e) {
+                console.error("Database connection fault:", e);
+            }
+            transitionToMain();
+        } else {
+            errorMsg.className = "error-visible";
+            codeInput.style.borderColor = "#b13434";
+            setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
+        }
+    });
     
     // Live Supabase Database Connection
     const SUPABASE_URL = "https://zcnqrinkrxgjssvvpzmh.supabase.co"; 
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjbnFyaW5rcnhnanNzdnZwem1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzM2NTIsImV4cCI6MjA5NzI0OTY1Mn0.sr7PE1awL-k-P5F5_vq8DRi9bgjfSs22aUMkquS4Q8A"; 
     let supabase = null;
 
-    // A beautiful array of warm, distinct pastel colors to rotate through based on usernames
-    const USER_COLORS = [
-        "#f4ede7", // Pastel Warm Grey
-        "#e8f1f5", // Pastel Soft Blue
-        "#edf5e8", // Pastel Mint Sage
-        "#f5ede8", // Pastel Light Coral
-        "#f3e8f5", // Pastel Lavender
-        "#f5f3e8", // Pastel Soft Sand
-        "#e8f5f3"  // Pastel Pale Teal
-    ];
+    const USER_COLORS = ["#b5e2fa", "#edafb8", "#f4e285", "#b4e197", "#d8b4f8", "#fbc7a4", "#97dece"];
 
-    // Screen Layout Elements
+    // App Screen Sections
     const nameScreen = document.getElementById("name-screen");
     const authScreen = document.getElementById("auth-screen");
     const mainScreen = document.getElementById("main-screen");
 
-    // Interactive Form Controls
+    // Profile Setup DOM Selectors
     const nameInput = document.getElementById("name-input");
     const nameSubmitBtn = document.getElementById("name-submit-btn");
     const nameErrorMsg = document.getElementById("name-error-msg");
-    
+    const pfpFileInput = document.getElementById("pfp-file-input");
+    const pfpPreviewImg = document.getElementById("pfp-preview-img");
+    const pfpPreviewFallback = document.getElementById("pfp-preview-fallback");
+
+    // Password Gate UI
     const userGreeting = document.getElementById("user-greeting");
     const codeInput = document.getElementById("code-input");
     const submitBtn = document.getElementById("submit-btn");
     const errorMsg = document.getElementById("error-msg");
     const changeNameBtn = document.getElementById("change-name-btn");
+    const authPfp = document.getElementById("auth-pfp");
+    const authPfpFallback = document.getElementById("auth-pfp-fallback");
 
-    // Feed Components
-    const teaCup = document.querySelector(".tea-cup");
-    const teaStream = document.getElementById("tea-stream");
-    const feedContainer = document.getElementById("feed-container");
-    const currentDateDisplay = document.getElementById("current-date-display");
-    const newsContent = document.getElementById("news-content");
-    
+    // Chat Interface Components
+    const commentsList = document.getElementById("comments-list");
     const commentForm = document.getElementById("comment-form");
     const commentInput = document.getElementById("comment-input");
-    const commentsList = document.getElementById("comments-list");
+    const chatScroller = document.getElementById("chat-scroller");
 
-    // Initialize View Routine based on cached name string
-    let currentUsername = localStorage.getItem("teadrop_username");
+    // State Tracking
+    let currentUsername = localStorage.getItem("teadrop_username") || "";
+    let userPfpBase64 = localStorage.getItem("teadrop_pfp") || "";
 
+    // Image upload handler to convert picture files to compressed Base64 text strings
+    pfpFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                userPfpBase64 = event.target.result;
+                pfpPreviewImg.src = userPfpBase64;
+                pfpPreviewImg.classList.remove("hidden");
+                pfpPreviewFallback.classList.add("hidden");
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Determine initial application state routing on landing
     if (!currentUsername) {
         nameScreen.classList.remove("hidden");
     } else {
         showPasswordScreen();
     }
 
-    // Name Screen Form Controller Actions
     nameSubmitBtn.addEventListener("click", () => {
         const enteredName = nameInput.value.trim();
         if (enteredName.length >= 2) {
             localStorage.setItem("teadrop_username", enteredName);
+            if (userPfpBase64) {
+                localStorage.setItem("teadrop_pfp", userPfpBase64);
+            } else {
+                localStorage.removeItem("teadrop_pfp"); // Clear old PFP if not provided
+            }
             currentUsername = enteredName;
             nameScreen.classList.add("hidden");
             showPasswordScreen();
@@ -70,21 +113,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") nameSubmitBtn.click();
     });
 
-    // Helper to transition to password entry gate
     function showPasswordScreen() {
         userGreeting.textContent = currentUsername;
+        
+        if (userPfpBase64) {
+            authPfp.src = userPfpBase64;
+            authPfp.classList.remove("hidden");
+            authPfpFallback.classList.add("hidden");
+        } else {
+            authPfpFallback.textContent = currentUsername.charAt(0).toUpperCase();
+            authPfpFallback.classList.remove("hidden");
+            authPfp.classList.add("hidden");
+        }
+        
         authScreen.classList.remove("hidden");
-        codeInput.value = ""; 
+        codeInput.value = "";
     }
 
-    // Allow user to clear cache and change name right from password panel
     changeNameBtn.addEventListener("click", () => {
         authScreen.classList.add("hidden");
         nameInput.value = currentUsername;
         nameScreen.classList.remove("hidden");
     });
 
-    // Code Verification Handling
     submitBtn.addEventListener("click", () => {
         if (codeInput.value.trim() === CORRECT_CODE) {
             try {
@@ -106,111 +157,97 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") submitBtn.click();
     });
 
-    // Main Drop Animation Timelines
     function transitionToMain() {
         authScreen.classList.add("hidden");
         mainScreen.classList.remove("hidden");
 
-        const todayStr = getFormattedDate();
-        currentDateDisplay.textContent = todayStr;
-
-        setTimeout(() => { teaCup.classList.add("cup-tip-pour"); }, 300);
-        setTimeout(() => { teaStream.classList.add("spill-active"); }, 900);
-
-        setTimeout(() => {
-            fetchNewsContent(todayStr);
-            if (supabase) {
-                loadSavedComments();
-            } else {
-                commentsList.innerHTML = "<p>Global comments unavailable.</p>";
-            }
-            feedContainer.classList.add("feed-visible");
-            teaStream.style.opacity = "0";
-        }, 1600);
-    }
-
-    function getFormattedDate() {
-        const date = new Date();
-        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-    }
-
-    function fetchNewsContent(targetDate) {
-        fetch("news.txt?v=" + new Date().getTime())
-            .then(res => { if (!res.ok) throw new Error(); return res.text(); })
-            .then(text => {
-                const newsMap = parseNewsFile(text);
-                newsContent.textContent = newsMap[targetDate] ? newsMap[targetDate].trim() : "No news available for today.";
-            })
-            .catch(() => { newsContent.textContent = "Could not fetch today's drop."; });
-    }
-
-    function parseNewsFile(text) {
-        const lines = text.split(/\r?\n/);
-        const newsData = {};
-        let currentKeyDate = null;
-        lines.forEach(line => {
-            const clean = line.trim();
-            if (!clean) return;
-            if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) {
-                currentKeyDate = clean;
-                newsData[currentKeyDate] = "";
-            } else if (currentKeyDate) {
-                newsData[currentKeyDate] += (newsData[currentKeyDate] ? "\n" : "") + clean;
-            }
-        });
-        return newsData;
+        if (supabase) {
+            loadSavedComments();
+            listenForLiveMessages(); // Enable live chat streaming subscription
+        }
     }
 
     /* ==========================================================================
-       SUPABASE DATASTREAM WRITING & COLOR ROTATION
+       WHATSAPP-STYLE COLOR SCHEME & REAL-TIME RECONCILIATION
        ========================================================================== */
 
-    // Custom coloring helper: maps a specific username string to a permanent index color from array
-    function getBackgroundColorForUser(username) {
+    function getBubbleColor(username) {
+        // Standardize strings down to lowercase so Vikrant, vikrant, and VIKRANT get the same color
+        const standard = username.trim().toLowerCase();
         let hash = 0;
-        for (let i = 0; i < username.length; i++) {
-            hash = username.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < standard.length; i++) {
+            hash = standard.charCodeAt(i) + ((hash << 5) - hash);
         }
-        const index = Math.abs(hash) % USER_COLORS.length;
-        return USER_COLORS[index];
+        return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
     }
 
-    // Modern styled rendering including the User Name header tags
-    function renderComment(username, text) {
-        const blockColor = getBackgroundColorForUser(username);
+    function renderMessage(username, text, pfp, timestampStr) {
+        const isSelf = username.trim().toLowerCase() === currentUsername.trim().toLowerCase();
+        
+        const msgContainer = document.createElement("div");
+        msgContainer.className = `msg-container ${isSelf ? 'outgoing' : 'incoming'}`;
 
-        const itemWrapper = document.createElement("div");
-        itemWrapper.className = "comment-item";
-        itemWrapper.style.backgroundColor = blockColor;
+        // Create avatar element for other users
+        if (!isSelf) {
+            if (pfp) {
+                const img = document.createElement("img");
+                img.className = "msg-avatar";
+                img.src = pfp;
+                msgContainer.appendChild(img);
+            } else {
+                const fallback = document.createElement("div");
+                fallback.className = "msg-avatar text-avatar";
+                fallback.style.fontSize = "0.9rem";
+                fallback.style.width = "32px";
+                fallback.style.height = "32px";
+                fallback.style.borderRadius = "50%";
+                fallback.textContent = username.charAt(0).toUpperCase();
+                msgContainer.appendChild(fallback);
+            }
+        }
 
-        const nameHeader = document.createElement("span");
-        nameHeader.className = "comment-user-header";
-        nameHeader.textContent = username;
+        const bubble = document.createElement("div");
+        bubble.className = "msg-bubble";
+        if (!isSelf) {
+            bubble.style.backgroundColor = getBubbleColor(username);
+        }
 
-        const bodyText = document.createElement("p");
-        bodyText.className = "comment-text-body";
-        bodyText.textContent = text;
+        const authorTag = document.createElement("span");
+        authorTag.className = "msg-author-tag";
+        authorTag.style.color = "#128c7e";
+        authorTag.textContent = username;
 
-        itemWrapper.appendChild(nameHeader);
-        itemWrapper.appendChild(bodyText);
-        commentsList.insertBefore(itemWrapper, commentsList.firstChild);
+        const payload = document.createElement("p");
+        payload.className = "msg-text-payload";
+        payload.textContent = text;
+
+        const timeStamp = document.createElement("span");
+        timeStamp.className = "msg-time-stamp";
+        timeStamp.textContent = timestampStr || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (!isSelf) bubble.appendChild(authorTag);
+        bubble.appendChild(payload);
+        bubble.appendChild(timeStamp);
+        msgContainer.appendChild(bubble);
+
+        commentsList.appendChild(msgContainer);
+        chatScroller.scrollTop = chatScroller.scrollHeight; // Auto-scroll down on new message
     }
 
     async function loadSavedComments() {
         try {
-            // Fetching both columns from your table asset
             const { data, error } = await supabase
                 .from('comments')
-                .select('username, text')
+                .select('username, text, pfp, created_at')
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
 
             if (data) {
                 commentsList.innerHTML = "";
-                data.forEach(comment => {
-                    // Falls back to "Anonymous" if old records have a blank column
-                    renderComment(comment.username || "Anonymous", comment.text);
+                data.forEach(msg => {
+                    const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    renderMessage(msg.username || "Anonymous", msg.text, msg.pfp, time);
                 });
             }
         } catch (err) {
@@ -218,26 +255,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function saveCommentToStorage(username, text) {
-        try {
-            const { error } = await supabase
-                .from('comments')
-                .insert([{ username: username, text: text }]);
-            if (error) throw error;
-        } catch (err) {
-            console.error("Save failure:", err.message);
-        }
+    // Connect real-time subscription channel so messages display live instantly
+    function listenForLiveMessages() {
+        supabase
+            .channel('public:comments')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, payload => {
+                const fresh = payload.new;
+                // Avoid rendering duplicates if the incoming message was sent by ourselves
+                if (fresh.username.trim().toLowerCase() !== currentUsername.trim().toLowerCase()) {
+                    const time = new Date(fresh.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    renderMessage(fresh.username, fresh.text, fresh.pfp, time);
+                }
+            })
+            .subscribe();
     }
 
     commentForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const commentText = commentInput.value.trim();
-        
-        if (commentText) {
-            renderComment(currentUsername, commentText);
-            commentInput.value = "";
-            if (supabase) {
-                await saveCommentToStorage(currentUsername, commentText);
+        const msgText = commentInput.value.trim();
+        if (!msgText) return;
+
+        // Render message instantly on sender's screen
+        renderMessage(currentUsername, msgText, userPfpBase64);
+        commentInput.value = "";
+
+        if (supabase) {
+            try {
+                await supabase.from('comments').insert([{ 
+                    username: currentUsername, 
+                    text: msgText, 
+                    pfp: userPfpBase64 
+                }]);
+            } catch (err) {
+                console.error("Broadcast failure:", err);
             }
         }
     });
