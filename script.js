@@ -1,35 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // The SHA-256 hash of "CORRECT_CODE" is precomputed and stored for secure comparison without exposing the actual code in the client-side script.
+    // High-class SHA-256 hash of "15/12/2011"
     const HASHED_CODE = "5c52bb88d8b87b7a1e05d26ff9841bb2f4cf4966d5b9b6574f1df91ff996f014";
-
-    // Helper function to generate a SHA-256 hash using the browser's built-in Crypto API
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);                    
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // Updated Code Verification Handling
-    submitBtn.addEventListener("click", async () => {
-        const inputClean = codeInput.value.trim();
-        const inputHash = await sha256(inputClean);
-
-        if (inputHash === HASHED_CODE) {
-            try {
-                if (window.supabase) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                }
-            } catch (e) {
-                console.error("Database connection fault:", e);
-            }
-            transitionToMain();
-        } else {
-            errorMsg.className = "error-visible";
-            codeInput.style.borderColor = "#b13434";
-            setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
-        }
-    });
     
     // Live Supabase Database Connection
     const SUPABASE_URL = "https://zcnqrinkrxgjssvvpzmh.supabase.co"; 
@@ -70,100 +41,127 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUsername = localStorage.getItem("teadrop_username") || "";
     let userPfpBase64 = localStorage.getItem("teadrop_pfp") || "";
 
+    // Helper function to generate a SHA-256 hash using the browser's built-in Crypto API
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);                    
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     // Image upload handler to convert picture files to compressed Base64 text strings
-    pfpFileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                userPfpBase64 = event.target.result;
-                pfpPreviewImg.src = userPfpBase64;
-                pfpPreviewImg.classList.remove("hidden");
-                pfpPreviewFallback.classList.add("hidden");
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (pfpFileInput) {
+        pfpFileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    userPfpBase64 = event.target.result;
+                    if (pfpPreviewImg) {
+                        pfpPreviewImg.src = userPfpBase64;
+                        pfpPreviewImg.classList.remove("hidden");
+                    }
+                    if (pfpPreviewFallback) pfpPreviewFallback.classList.add("hidden");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
     // Determine initial application state routing on landing
     if (!currentUsername) {
-        nameScreen.classList.remove("hidden");
+        if (nameScreen) nameScreen.classList.remove("hidden");
     } else {
         showPasswordScreen();
     }
 
-    nameSubmitBtn.addEventListener("click", () => {
-        const enteredName = nameInput.value.trim();
-        if (enteredName.length >= 2) {
-            localStorage.setItem("teadrop_username", enteredName);
-            if (userPfpBase64) {
-                localStorage.setItem("teadrop_pfp", userPfpBase64);
+    if (nameSubmitBtn) {
+        nameSubmitBtn.addEventListener("click", () => {
+            const enteredName = nameInput.value.trim();
+            if (enteredName.length >= 2) {
+                localStorage.setItem("teadrop_username", enteredName);
+                if (userPfpBase64) {
+                    localStorage.setItem("teadrop_pfp", userPfpBase64);
+                } else {
+                    localStorage.removeItem("teadrop_pfp");
+                }
+                currentUsername = enteredName;
+                if (nameScreen) nameScreen.classList.add("hidden");
+                showPasswordScreen();
             } else {
-                localStorage.removeItem("teadrop_pfp"); // Clear old PFP if not provided
+                if (nameErrorMsg) nameErrorMsg.className = "error-visible";
             }
-            currentUsername = enteredName;
-            nameScreen.classList.add("hidden");
-            showPasswordScreen();
-        } else {
-            nameErrorMsg.className = "error-visible";
-        }
-    });
-
-    nameInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") nameSubmitBtn.click();
-    });
-
-    function showPasswordScreen() {
-        userGreeting.textContent = currentUsername;
-        
-        if (userPfpBase64) {
-            authPfp.src = userPfpBase64;
-            authPfp.classList.remove("hidden");
-            authPfpFallback.classList.add("hidden");
-        } else {
-            authPfpFallback.textContent = currentUsername.charAt(0).toUpperCase();
-            authPfpFallback.classList.remove("hidden");
-            authPfp.classList.add("hidden");
-        }
-        
-        authScreen.classList.remove("hidden");
-        codeInput.value = "";
+        });
     }
 
-    changeNameBtn.addEventListener("click", () => {
-        authScreen.classList.add("hidden");
-        nameInput.value = currentUsername;
-        nameScreen.classList.remove("hidden");
-    });
+    if (nameInput) {
+        nameInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") nameSubmitBtn.click();
+        });
+    }
 
-    submitBtn.addEventListener("click", () => {
-        if (codeInput.value.trim() === CORRECT_CODE) {
-            try {
-                if (window.supabase) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                }
-            } catch (e) {
-                console.error("Database connection fault:", e);
-            }
-            transitionToMain();
-        } else {
-            errorMsg.className = "error-visible";
-            codeInput.style.borderColor = "#b13434";
-            setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
+    function showPasswordScreen() {
+        if (userGreeting) userGreeting.textContent = currentUsername;
+        
+        if (userPfpBase64 && authPfp) {
+            authPfp.src = userPfpBase64;
+            authPfp.classList.remove("hidden");
+            if (authPfpFallback) authPfpFallback.classList.add("hidden");
+        } else if (authPfpFallback) {
+            authPfpFallback.textContent = currentUsername.charAt(0).toUpperCase();
+            authPfpFallback.classList.remove("hidden");
+            if (authPfp) authPfp.classList.add("hidden");
         }
-    });
+        
+        if (authScreen) authScreen.classList.remove("hidden");
+        if (codeInput) codeInput.value = "";
+    }
 
-    codeInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") submitBtn.click();
-    });
+    if (changeNameBtn) {
+        changeNameBtn.addEventListener("click", () => {
+            if (authScreen) authScreen.classList.add("hidden");
+            if (nameInput) nameInput.value = currentUsername;
+            if (nameScreen) nameScreen.classList.remove("hidden");
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener("click", async () => {
+            const inputClean = codeInput.value.trim();
+            const inputHash = await sha256(inputClean);
+
+            if (inputHash === HASHED_CODE) {
+                try {
+                    if (window.supabase) {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    }
+                } catch (e) {
+                    console.error("Database connection fault:", e);
+                }
+                transitionToMain();
+            } else {
+                if (errorMsg) errorMsg.className = "error-visible";
+                if (codeInput) {
+                    codeInput.style.borderColor = "#b13434";
+                    setTimeout(() => { codeInput.style.borderColor = ""; }, 500);
+                }
+            }
+        });
+    }
+
+    if (codeInput) {
+        codeInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") submitBtn.click();
+        });
+    }
 
     function transitionToMain() {
-        authScreen.classList.add("hidden");
-        mainScreen.classList.remove("hidden");
+        if (authScreen) authScreen.classList.add("hidden");
+        if (mainScreen) mainScreen.classList.remove("hidden");
 
         if (supabase) {
             loadSavedComments();
-            listenForLiveMessages(); // Enable live chat streaming subscription
+            listenForLiveMessages();
         }
     }
 
@@ -172,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================================== */
 
     function getBubbleColor(username) {
-        // Standardize strings down to lowercase so Vikrant, vikrant, and VIKRANT get the same color
         const standard = username.trim().toLowerCase();
         let hash = 0;
         for (let i = 0; i < standard.length; i++) {
@@ -187,7 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const msgContainer = document.createElement("div");
         msgContainer.className = `msg-container ${isSelf ? 'outgoing' : 'incoming'}`;
 
-        // Create avatar element for other users
         if (!isSelf) {
             if (pfp) {
                 const img = document.createElement("img");
@@ -230,8 +226,12 @@ document.addEventListener("DOMContentLoaded", () => {
         bubble.appendChild(timeStamp);
         msgContainer.appendChild(bubble);
 
-        commentsList.appendChild(msgContainer);
-        chatScroller.scrollTop = chatScroller.scrollHeight; // Auto-scroll down on new message
+        if (commentsList) {
+            commentsList.appendChild(msgContainer);
+        }
+        if (chatScroller) {
+            chatScroller.scrollTop = chatScroller.scrollHeight;
+        }
     }
 
     async function loadSavedComments() {
@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (error) throw error;
 
-            if (data) {
+            if (data && commentsList) {
                 commentsList.innerHTML = "";
                 data.forEach(msg => {
                     const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -255,13 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Connect real-time subscription channel so messages display live instantly
     function listenForLiveMessages() {
         supabase
             .channel('public:comments')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, payload => {
                 const fresh = payload.new;
-                // Avoid rendering duplicates if the incoming message was sent by ourselves
                 if (fresh.username.trim().toLowerCase() !== currentUsername.trim().toLowerCase()) {
                     const time = new Date(fresh.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     renderMessage(fresh.username, fresh.text, fresh.pfp, time);
@@ -270,25 +268,26 @@ document.addEventListener("DOMContentLoaded", () => {
             .subscribe();
     }
 
-    commentForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const msgText = commentInput.value.trim();
-        if (!msgText) return;
+    if (commentForm) {
+        commentForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msgText = commentInput.value.trim();
+            if (!msgText) return;
 
-        // Render message instantly on sender's screen
-        renderMessage(currentUsername, msgText, userPfpBase64);
-        commentInput.value = "";
+            renderMessage(currentUsername, msgText, userPfpBase64);
+            commentInput.value = "";
 
-        if (supabase) {
-            try {
-                await supabase.from('comments').insert([{ 
-                    username: currentUsername, 
-                    text: msgText, 
-                    pfp: userPfpBase64 
-                }]);
-            } catch (err) {
-                console.error("Broadcast failure:", err);
+            if (supabase) {
+                try {
+                    await supabase.from('comments').insert([{ 
+                        username: currentUsername, 
+                        text: msgText, 
+                        pfp: userPfpBase64 
+                    }]);
+                } catch (err) {
+                    console.error("Broadcast failure:", err);
+                }
             }
-        }
-    });
+        });
+    }
 });
