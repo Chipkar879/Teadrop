@@ -56,16 +56,9 @@
                 <div class="header-left">
                     <div class="group-pfp-container">
                         <img id="group-pic-display" src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=100" alt="Group Pic">
-                        <label for="group-pic-input" class="group-pic-edit-overlay">
-                            <i class="fa-solid fa-pen"></i>
-                        </label>
-                        <input type="file" id="group-pic-input" accept="image/*" class="hidden">
                     </div>
                     <div class="group-meta">
-                        <div class="title-edit-row">
-                            <h2 id="group-name-title" contenteditable="true">The Tea Room</h2>
-                            <i class="fa-solid fa-pencil edit-indicator"></i>
-                        </div>
+                        <h2 id="group-name-title">The Tea Room</h2>
                         <p class="group-status">online, group discussion</p>
                     </div>
                 </div>
@@ -73,19 +66,19 @@
                     <button class="hdr-btn"><i class="fa-solid fa-video"></i></button>
                     <button class="hdr-btn"><i class="fa-solid fa-phone"></i></button>
                     <button class="hdr-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-                    <button class="hdr-btn" id="logout-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    <button class="hdr-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 </div>
             </header>
 
             <main class="chat-body" id="chat-scroller">
-                <div id="comments-list" class="message-feed">
-                    </div>
+                <div id="comments-list" class="message-feed"></div>
             </main>
 
             <footer class="chat-input-bar">
                 <div class="input-action-triggers">
                     <button class="bar-btn"><i class="fa-regular fa-face-smile"></i></button>
-                    <button class="bar-btn"><i class="fa-solid fa-plus"></i></button>
+                    <label for="chat-image-input" class="bar-btn-label"><i class="fa-solid fa-plus"></i></label>
+                    <input type="file" id="chat-image-input" accept="image/*" class="hidden">
                 </div>
                 <form id="comment-form" class="msg-input-form">
                     <input type="text" id="comment-input" placeholder="Type a message" autocomplete="off" required>
@@ -94,7 +87,7 @@
                     </button>
                 </form>
                 <div class="input-action-triggers">
-                    <button class="bar-btn"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="bar-btn" id="voice-record-btn"><i class="fa-solid fa-microphone"></i></button>
                 </div>
             </footer>
 
